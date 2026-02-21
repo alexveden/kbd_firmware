@@ -2,6 +2,12 @@
     "name": "Corne v4",
     "vendorId": "0x4653",
     "productId": "0x0004",
+    "customKeycodes": [
+        {"name": "MyShiftCap",
+         "title": "My custom shift + caps word",
+         "shortName": "STICKY_SHIFT"
+        }
+    ],
     "matrix": {"rows": 8, "cols": 7},
     "lighting": "vialrgb",
     "layouts": {
