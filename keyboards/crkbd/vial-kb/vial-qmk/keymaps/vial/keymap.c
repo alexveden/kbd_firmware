@@ -6,7 +6,6 @@ enum custom_keycodes
     STICKY_SHIFT = QK_KB_0,
 };
 
-static bool caps_word_active = false;
 static uint16_t sticky_timer = 0;
 
 //
@@ -26,22 +25,19 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                 // Register the shift mod immediately for normal hold behavior
                 register_code(KC_LSFT);
 
-                if (caps_word_active) {
-                    // caps word enabled, turn off when STICKY_SHIFT is pressed again
-                    caps_word_active = false;
+                if (is_caps_word_on()) {
+                    caps_word_off();
                     sticky_timer = 0;
                 } else {
                     // Check for double tap (for caps word)
-                    if (timer_elapsed(sticky_timer) < STICKY_SHIFT_DTAP_TERM) {
-                        caps_word_active = true;
-                    }
+                    if (timer_elapsed(sticky_timer) < STICKY_SHIFT_DTAP_TERM) { caps_word_on(); }
                     sticky_timer = current_time;
                 }
             } else {
-                // Check if this was a quick tap for sticky behavior
-                unregister_code(KC_LSFT);
+                if (!is_caps_word_on()) {
+                    // Check if this was a quick tap for sticky behavior
+                    unregister_code(KC_LSFT);
 
-                if (!caps_word_active) {
                     if (sticky_timer && timer_elapsed(sticky_timer) < STICKY_SHIFT_DTAP_TERM) {
                         // Quick tap - activate one-shot shift
                         add_oneshot_mods(MOD_LSFT);
@@ -50,42 +46,8 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                 }
             }
             return false;
-        default: {
-            if (!caps_word_active) return true;
-
-            if (record->event.pressed && keycode < QK_BASIC_MAX) {
-                if ((keycode >= KC_A && keycode <= KC_Z) || keycode == KC_MINUS ||
-                    keycode == KC_BACKSPACE || keycode == KC_DEL || keycode == KC_LEFT ||
-                    keycode == KC_RIGHT) {
-                    sticky_timer = timer_read();
-                    add_oneshot_mods(MOD_LSFT);
-                } else if ((keycode >= KC_1 && keycode <= KC_0)) {
-                    sticky_timer = timer_read();
-                    // numbers are typed without shifting
-                    del_oneshot_mods(MOD_LSFT);
-                } else {
-                    // Non-letter key pressed - deactivate caps word
-                    caps_word_active = false;
-                    sticky_timer = 0;
-                    unregister_code(KC_LSFT);
-                    del_oneshot_mods(MOD_LSFT);
-                }
-            }
-        }
     }
     return true;
-}
-
-void
-matrix_scan_user(void)
-{
-    // Handle caps word / sticky shift timeout
-    if (caps_word_active && sticky_timer && timer_elapsed(sticky_timer) > CAPS_WORD_IDLE_TIMEOUT) {
-        caps_word_active = false;
-        sticky_timer = 0;
-        del_oneshot_mods(MOD_LSFT);
-        unregister_code(KC_LSFT);
-    }
 }
 
 
