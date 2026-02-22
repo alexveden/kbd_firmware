@@ -9,6 +9,7 @@ enum custom_keycodes
 
 static uint16_t sticky_timer = 0;
 static uint16_t rs_enter_timer = 0;
+static uint16_t rs_enter_any_key_pressed = 0;
 
 //
 // sticky shift/caps word implementation
@@ -55,16 +56,22 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                 uint16_t current_time = timer_read();
                 register_code(KC_LSFT);
                 rs_enter_timer = current_time;
+                rs_enter_any_key_pressed = 0;
             } else {
                 unregister_code(KC_LSFT);
 
-                if (timer_elapsed(rs_enter_timer) < RS_ENTER_TERM) {
+                if (!rs_enter_any_key_pressed && timer_elapsed(rs_enter_timer) < RS_ENTER_TERM) {
                     // key was released too fast - act as a normal enter
                     tap_code(KC_ENT); 
                 }
                 rs_enter_timer = 0;
+                rs_enter_any_key_pressed = 0;
             }
             return false;
+        default:
+            if(rs_enter_timer) {
+                rs_enter_any_key_pressed = 1;
+            }
     }
     return true;
 }
