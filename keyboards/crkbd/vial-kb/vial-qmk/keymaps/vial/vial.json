@@ -6,6 +6,10 @@
         {"name": "MyShiftCap",
          "title": "My custom shift + caps word",
          "shortName": "STICKY_SHIFT"
+        },
+        {"name": "",
+         "title": "Acts like enter when tapped or shift when held",
+         "shortName": "MY_RS_ENTER"
         }
     ],
     "matrix": {"rows": 8, "cols": 7},

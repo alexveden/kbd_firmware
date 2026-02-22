@@ -8,5 +8,5 @@
 //#define FLOW_TAP_TERM 150
 #define CAPS_WORD_IDLE_TIMEOUT 3000  // 3 seconds.
 #define STICKY_SHIFT_DTAP_TERM 400
-
+#define RS_ENTER_TERM  200
 
