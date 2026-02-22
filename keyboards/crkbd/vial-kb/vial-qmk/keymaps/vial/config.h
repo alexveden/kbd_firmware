@@ -4,8 +4,9 @@
 #define VIAL_UNLOCK_COMBO_ROWS {0, 0}
 #define VIAL_UNLOCK_COMBO_COLS {0, 1}
 
-#define CHORDAL_HOLD
-#define FLOW_TAP_TERM 150
+//#define CHORDAL_HOLD
+//#define FLOW_TAP_TERM 150
 #define CAPS_WORD_IDLE_TIMEOUT 3000  // 3 seconds.
 #define STICKY_SHIFT_DTAP_TERM 400
+
 
