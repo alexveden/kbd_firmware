@@ -12,7 +12,7 @@ static uint16_t rs_enter_timer = 0;
 
 //
 // sticky shift/caps word implementation
-// if STICKY_SHIFT tapped - next key is upper
+// (disabled) if STICKY_SHIFT tapped - next key is upper
 // if STICKY_SHIFT is held - acts like an original shift
 // if STICKY_SHIFT is double tapped - acts like a caps word
 //
@@ -40,11 +40,13 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                     // Check if this was a quick tap for sticky behavior
                     unregister_code(KC_LSFT);
 
+                    /*
                     if (sticky_timer && timer_elapsed(sticky_timer) < STICKY_SHIFT_DTAP_TERM) {
                         // Quick tap - activate one-shot shift
                         add_oneshot_mods(MOD_LSFT);
                         sticky_timer = timer_read();
                     }
+                    */
                 }
             }
             return false;
