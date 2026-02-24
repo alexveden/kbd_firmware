@@ -41,14 +41,6 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                 if (!is_caps_word_on()) {
                     // Check if this was a quick tap for sticky behavior
                     unregister_code(KC_LSFT);
-
-                    /*
-                    if (sticky_timer && timer_elapsed(sticky_timer) < STICKY_SHIFT_DTAP_TERM) {
-                        // Quick tap - activate one-shot shift
-                        add_oneshot_mods(MOD_LSFT);
-                        sticky_timer = timer_read();
-                    }
-                    */
                 }
             }
             return false;
@@ -63,13 +55,12 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                     rs_enter_shift_held = 0;
                 }
                 rs_enter_timer = current_time;
-                rs_enter_any_key_pressed = 0;
             } else {
-                if (!rs_enter_shift_held)  unregister_code(KC_LSFT);
+                if (!rs_enter_shift_held) { unregister_code(KC_LSFT); }
 
                 if (!rs_enter_any_key_pressed && timer_elapsed(rs_enter_timer) < RS_ENTER_TERM) {
                     // key was released too fast - act as a normal enter
-                    tap_code(KC_ENT); 
+                    tap_code(KC_ENT);
                 }
                 rs_enter_timer = 0;
                 rs_enter_any_key_pressed = 0;
@@ -77,8 +68,15 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
             }
             return false;
         default:
-            if(rs_enter_timer) {
+            if (rs_enter_timer) {
                 rs_enter_any_key_pressed = 1;
+            } else {
+                // Get the base keycode (removes mod-tap/layer-tap wrapper)
+                uint16_t base_keycode = keycode & 0xFF;
+
+                if (base_keycode >= KC_A && base_keycode <= KC_Z) {
+                    rs_enter_any_key_pressed = record->event.pressed;
+                }
             }
     }
     return true;
