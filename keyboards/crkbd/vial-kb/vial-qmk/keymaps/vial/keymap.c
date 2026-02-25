@@ -10,7 +10,25 @@ enum custom_keycodes
 static uint16_t sticky_timer = 0;
 static uint16_t rs_enter_timer = 0;
 static uint16_t rs_enter_shift_held = 0;
-static uint16_t rs_enter_any_key_pressed = 0;
+static uint16_t modtap_key_held = 0;
+
+// This runs BEFORE process_record_user
+bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // Get the base keycode (removes mod-tap/layer-tap wrapper)
+    uint16_t base_keycode = keycode & 0xFF;
+
+    // This logic is for handling shift triggerring withi the following sequence
+    //   STICKY_SHIFT+ -> HRM+ -> STICKY_SHIFT- -> HRM- 
+    // HRM sends key on release, this makes weird behavior with STICKY_SHIFT
+    if (IS_QK_MOD_TAP(keycode)) {
+        if (base_keycode >= KC_A && base_keycode <= KC_Z) {
+            // uprintf("IS_QK_MOD_TAP pressed=%d\n",  record->event.pressed);
+            modtap_key_held = record->event.pressed;
+        }
+    } 
+
+    return true;
+}
 
 //
 // sticky shift/caps word implementation
@@ -21,6 +39,9 @@ static uint16_t rs_enter_any_key_pressed = 0;
 bool
 process_record_user(uint16_t keycode, keyrecord_t* record)
 {
+    // uprintf("process_record_user -- keycode=0x%04X (%d), pressed=%d\n", 
+        // keycode, keycode, record->event.pressed);
+
     switch (keycode) {
         case STICKY_SHIFT:
             if (record->event.pressed) {
@@ -41,6 +62,10 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
                 if (!is_caps_word_on()) {
                     // Check if this was a quick tap for sticky behavior
                     unregister_code(KC_LSFT);
+                    if (modtap_key_held){
+                        // print("STICKY_SHIFT - modtap_key_held\n");
+                        add_oneshot_mods(MOD_LSFT);
+                    }
                 }
             }
             return false;
@@ -58,27 +83,24 @@ process_record_user(uint16_t keycode, keyrecord_t* record)
             } else {
                 if (!rs_enter_shift_held) { unregister_code(KC_LSFT); }
 
-                if (!rs_enter_any_key_pressed && timer_elapsed(rs_enter_timer) < RS_ENTER_TERM) {
+                if (rs_enter_timer && timer_elapsed(rs_enter_timer) < RS_ENTER_TERM) {
                     // key was released too fast - act as a normal enter
                     tap_code(KC_ENT);
+                } else if (modtap_key_held) {
+                    // home row mod pressed but still held, keep shift on release
+                    add_oneshot_mods(MOD_LSFT);
+                    // print("MY_RS_ENTER - modtap_key_held\n");  
                 }
                 rs_enter_timer = 0;
-                rs_enter_any_key_pressed = 0;
                 rs_enter_shift_held = 0;
             }
             return false;
         default:
             if (rs_enter_timer) {
-                rs_enter_any_key_pressed = 1;
-            } else {
-                // Get the base keycode (removes mod-tap/layer-tap wrapper)
-                uint16_t base_keycode = keycode & 0xFF;
-
-                if (base_keycode >= KC_A && base_keycode <= KC_Z) {
-                    rs_enter_any_key_pressed = record->event.pressed;
-                }
+                rs_enter_timer = 0;
             }
     }
+
     return true;
 }
 
